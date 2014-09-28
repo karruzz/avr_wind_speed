@@ -17,4 +17,5 @@
 void Uart_init(unsigned int ubrr);
 int Uart_putc(char c, FILE *file);
 int Uart_getc(FILE* file);
+
 #endif /* UART_H_ */

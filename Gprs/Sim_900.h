@@ -6,14 +6,21 @@
  * License: GNU GPL 3
  */
 
+#ifndef F_CPU
+#define F_CPU 7372800UL
+#endif
 
 #ifndef SIM_900_H_
 #define SIM_900_H_
 
-#include <avr/io.h>
-#include <avr/delay.h>
+#include <stdio.h>
+#include <string.h>
+#include <util/delay.h>
+#include <avr/pgmspace.h>
 
-void Sim900On(void);
-void Sim900Off(void);
+void Sim900PowerOn(void);
+void Sim900Init();
+void Sim900SendTemp();
+void Sim900PowerOff(void);
 
 #endif /* SIM_900_H_ */

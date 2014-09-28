@@ -12,7 +12,7 @@ FIFO(64) uart_tx_fifo;
 FIFO(64) uart_rx_fifo;
 
 void Uart_init(unsigned int ubrr) 
-{
+{	
 	//настройка скорости обмена
 	UBRR0H = (unsigned char)(ubrr>>8);
 	UBRR0L = (unsigned char)ubrr;
