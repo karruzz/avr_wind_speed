@@ -46,6 +46,8 @@ void AC_On()
 	
 	TCCR1B |= _BV(CS12); // /256
 	TIMSK1 |= _BV(TOIE1); // прерывание по переполнению Т1
+	
+	TCCR0B |= _BV();
 	StrobesCount = 0;
 	_strobes = 0;
 }
@@ -66,7 +68,6 @@ void AC_Off()
 ISR(ANALOG_COMP_vect)
 {
 	cli();
-//	StrobesCount++;
 	_strobes++;	
 	sei();		
 }

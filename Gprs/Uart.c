@@ -8,8 +8,8 @@
 
 #include "Uart.h"
 
-FIFO(64) uart_tx_fifo;
-FIFO(64) uart_rx_fifo;
+FIFO(128) uart_tx_fifo;
+FIFO(128) uart_rx_fifo;
 
 void Uart_init(unsigned int ubrr) 
 {	
@@ -48,7 +48,8 @@ ISR(USART_UDRE_vect)
 int Uart_putc(char c, FILE *file)
 {
 	int ret;
-	cli(); //запрещаем прерывания
+    if (c == '\n') Uart_putc('\r', file);
+	cli(); //запрещаем прерывания	
 	if( !FIFO_IS_FULL(uart_tx_fifo) ) {
 		//если в буфере есть место, то добавляем туда байт
 		FIFO_PUSH(uart_tx_fifo, c);
