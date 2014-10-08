@@ -7,6 +7,8 @@
  */
 #include "Adc.h"
 
+#define HARDWARE_LOAD_MS 10000
+
 void AC_On()
 {
 	// вкл питание датчика	
@@ -22,9 +24,10 @@ void AC_On()
 	ACSR |= _BV(ACBG) | _BV(ACIS1) | _BV(ACIC);	
 	
 	TCCR1B |= _BV(CS12); // /256
-	TIMSK1 |= _BV(ICIE1); // прерывание по переполнению Т1
+	TIMSK1 |= _BV(ICIE1); // прерывание по переполнению Т1	
 	
-	StrobeTime = 0xFFFF;
+	StrobeTime = 0xFFFF;	
+	_delay_ms(HARDWARE_LOAD_MS);
 }
 
 void AC_Off()
@@ -43,6 +46,6 @@ ISR(TIMER1_CAPT_vect)
 {
 	cli();
 	TCNT1 = 0;
-	StrobeTime = ICR1;
+	StrobeTime = ICR1;	
 	sei();
 }

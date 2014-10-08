@@ -14,8 +14,7 @@
 #include <util/delay.h>
 #include <avr/interrupt.h>
 
-volatile unsigned int StrobeTime;
-volatile unsigned int IsTimeToSend;
+volatile long int StrobeTime;
 
 void AC_On();
 void AC_Off();

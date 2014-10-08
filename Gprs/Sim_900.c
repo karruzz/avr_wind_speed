@@ -8,7 +8,6 @@
 
 #define RESPONSE_WAIT 3000
 #define RESPONSE_PAUSE 1000
-#define ATTEMPTS 1
 
 #include "Sim_900.h"
 
@@ -60,27 +59,35 @@ int SendCommandWithCheck(int (*fp)(FILE *__stream, const char *__fmt, ...),
 	return 0;
 }
 
-int Sim900SendSpeed(int speed)
+int Sim900SendSpeed(unsigned int speeds[], int count)
 {
 	// init
 	if (SendCommandWithCheck(&fprintf_P, CREG, CREG_RESPONSE, 3)==0) return 0;
 
-	if (SendCommandWithCheck(&fprintf_P, SAPBR_CONTYPE, OK, ATTEMPTS)==0) return 0;
-	if (SendCommandWithCheck(&fprintf_P, SAPBR_APN, OK, ATTEMPTS)==0) return 0;
-	if (SendCommandWithCheck(&fprintf_P, SAPBR_USER, OK, ATTEMPTS)==0) return 0;
-	if (SendCommandWithCheck(&fprintf_P, SAPBR_PWD, OK, ATTEMPTS)==0) return 0;
-	if (SendCommandWithCheck(&fprintf_P, SAPBR_CONNECT, OK, ATTEMPTS)==0) return 0;
+	if (SendCommandWithCheck(&fprintf_P, SAPBR_CONTYPE, OK, 1)==0) return 0;
+	if (SendCommandWithCheck(&fprintf_P, SAPBR_APN, OK, 1)==0) return 0;
+	if (SendCommandWithCheck(&fprintf_P, SAPBR_USER, OK, 1)==0) return 0;
+	if (SendCommandWithCheck(&fprintf_P, SAPBR_PWD, OK, 1)==0) return 0;
+	if (SendCommandWithCheck(&fprintf_P, SAPBR_CONNECT, OK, 1)==0) return 0;
 	
 	// http request
-	if (SendCommandWithCheck(&fprintf_P, HTTPINIT, OK, ATTEMPTS)==0) return 0;
-	if (SendCommandWithCheck(&fprintf_P, HTTPPARA_CID, OK, ATTEMPTS)==0) return 0;
+	if (SendCommandWithCheck(&fprintf_P, HTTPINIT, OK, 1)==0) return 0;
+	if (SendCommandWithCheck(&fprintf_P, HTTPPARA_CID, OK, 1)==0) return 0;
 	
 	memset(url, 0, sizeof(url));
-	sprintf(url, "%s%i\"\n", HTTPPARA_URL, speed);
-	if (SendCommandWithCheck(&fprintf, url, OK, ATTEMPTS)==0) return 0;
+	strcat(url, HTTPPARA_URL);
+	for (int i = 0; i < count - 1; i++)	
+	{
+		char temp[6];
+		sprintf(temp, "%u_", speeds[i]);
+		strcat(url, temp);		
+	}
+	char temp[7];
+	sprintf(temp, "%u\"\n", speeds[count - 1]);	
+	strcat(url, temp);
+	if (SendCommandWithCheck(&fprintf, url, OK, 1)==0) return 0;
 	
 	if (SendCommandWithCheck(&fprintf_P, HTTPACTION, HTTPACTION_RESPONSE, 5)==0) return 0;
-	if (SendCommandWithCheck(&fprintf_P, HTTPREAD, OK, ATTEMPTS)==0) return 0;
 	
 	return 1;
 }
@@ -94,5 +101,5 @@ void Sim900PowerOn()
 
 void Sim900PowerOff()
 {
-	SendCommandWithCheck(&fprintf_P, CPOWD, OK, ATTEMPTS);
+	SendCommandWithCheck(&fprintf_P, CPOWD, OK, 1);
 }
