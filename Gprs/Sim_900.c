@@ -59,20 +59,21 @@ int SendCommandWithCheck(int (*fp)(FILE *__stream, const char *__fmt, ...),
 	return 0;
 }
 
-int Sim900SendSpeed(unsigned int speeds[], int count)
+void Sim900SendSpeed(unsigned int speeds[], int count)
 {
-	// init
-	if (SendCommandWithCheck(&fprintf_P, CREG, CREG_RESPONSE, 3)==0) return 0;
+	// init		
+	SendCommandWithCheck(&fprintf_P, CREG, CREG_RESPONSE, 1);
 
-	if (SendCommandWithCheck(&fprintf_P, SAPBR_CONTYPE, OK, 1)==0) return 0;
-	if (SendCommandWithCheck(&fprintf_P, SAPBR_APN, OK, 1)==0) return 0;
-	if (SendCommandWithCheck(&fprintf_P, SAPBR_USER, OK, 1)==0) return 0;
-	if (SendCommandWithCheck(&fprintf_P, SAPBR_PWD, OK, 1)==0) return 0;
-	if (SendCommandWithCheck(&fprintf_P, SAPBR_CONNECT, OK, 1)==0) return 0;
+	SendCommandWithCheck(&fprintf_P, SAPBR_CONTYPE, OK, 1);
+	SendCommandWithCheck(&fprintf_P, SAPBR_APN, OK, 1);
+	SendCommandWithCheck(&fprintf_P, SAPBR_USER, OK, 1);
+	SendCommandWithCheck(&fprintf_P, SAPBR_PWD, OK, 1);
+	
+	SendCommandWithCheck(&fprintf_P, SAPBR_CONNECT, OK, 1);
 	
 	// http request
-	if (SendCommandWithCheck(&fprintf_P, HTTPINIT, OK, 1)==0) return 0;
-	if (SendCommandWithCheck(&fprintf_P, HTTPPARA_CID, OK, 1)==0) return 0;
+	SendCommandWithCheck(&fprintf_P, HTTPINIT, OK, 1);
+	SendCommandWithCheck(&fprintf_P, HTTPPARA_CID, OK, 1);
 	
 	memset(url, 0, sizeof(url));
 	strcat(url, HTTPPARA_URL);
@@ -85,11 +86,8 @@ int Sim900SendSpeed(unsigned int speeds[], int count)
 	char temp[7];
 	sprintf(temp, "%u\"\n", speeds[count - 1]);	
 	strcat(url, temp);
-	if (SendCommandWithCheck(&fprintf, url, OK, 1)==0) return 0;
-	
-	if (SendCommandWithCheck(&fprintf_P, HTTPACTION, HTTPACTION_RESPONSE, 5)==0) return 0;
-	
-	return 1;
+	SendCommandWithCheck(&fprintf, url, OK, 1);	
+	SendCommandWithCheck(&fprintf_P, HTTPACTION, HTTPACTION_RESPONSE, 1);
 }
 
 void Sim900PowerOn() 
