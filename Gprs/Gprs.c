@@ -38,13 +38,12 @@ int main(void)
 	int isSend = 0;
 	stdout = stdin = &uart_stream;	
 	Uart_init(MYUBRR);	
-	fprintf(stdout, "start\n");		
+	
 	unsigned int strobeAverage;
 
-	AC_On();
     while(1)
     {
-	//    AC_On();
+	    AC_On();
 	    for (int i = 0; i < SPEEDS_BLOCK_LENGTH; i++)
 	    {
 		    Ticks = 0;
@@ -58,13 +57,12 @@ int main(void)
 		    
 		    strobeAverage = StrobeSum / WIND_MEASURE_S;
 		    speeds[i] = (unsigned int)(K1 / exp(K2 * strobeAverage));
-			fprintf(stdout,"%u %u %lu\n", speeds[i], strobeAverage, StrobeSum);
 	    }
-	//    AC_Off();
+	    AC_Off();
 	    
-	    //Sim900PowerOn();
-	    //_delay_ms(WAIT_CONNECTION);
-	    //Sim900SendSpeed(speeds, SPEEDS_BLOCK_LENGTH);
-	    //Sim900PowerOff();
+	    Sim900PowerOn();
+	    _delay_ms(WAIT_CONNECTION);
+	    Sim900SendSpeed(speeds, SPEEDS_BLOCK_LENGTH);
+	    Sim900PowerOff();
     }	
 }

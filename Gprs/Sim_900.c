@@ -60,16 +60,15 @@ int SendCommandWithCheck(int (*fp)(FILE *__stream, const char *__fmt, ...),
 }
 
 void Sim900SendSpeed(unsigned int speeds[], int count)
-{
-	// init		
-	SendCommandWithCheck(&fprintf_P, CREG, CREG_RESPONSE, 1);
+{	
+	SendCommandWithCheck(&fprintf_P, CREG, CREG_RESPONSE, 5);
 
 	SendCommandWithCheck(&fprintf_P, SAPBR_CONTYPE, OK, 1);
 	SendCommandWithCheck(&fprintf_P, SAPBR_APN, OK, 1);
 	SendCommandWithCheck(&fprintf_P, SAPBR_USER, OK, 1);
 	SendCommandWithCheck(&fprintf_P, SAPBR_PWD, OK, 1);
 	
-	SendCommandWithCheck(&fprintf_P, SAPBR_CONNECT, OK, 1);
+	SendCommandWithCheck(&fprintf_P, SAPBR_CONNECT, OK, 5);
 	
 	// http request
 	SendCommandWithCheck(&fprintf_P, HTTPINIT, OK, 1);
@@ -87,7 +86,7 @@ void Sim900SendSpeed(unsigned int speeds[], int count)
 	sprintf(temp, "%u\"\n", speeds[count - 1]);	
 	strcat(url, temp);
 	SendCommandWithCheck(&fprintf, url, OK, 1);	
-	SendCommandWithCheck(&fprintf_P, HTTPACTION, HTTPACTION_RESPONSE, 1);
+	SendCommandWithCheck(&fprintf_P, HTTPACTION, HTTPACTION_RESPONSE, 5);
 }
 
 void Sim900PowerOn() 
@@ -99,5 +98,5 @@ void Sim900PowerOn()
 
 void Sim900PowerOff()
 {
-	SendCommandWithCheck(&fprintf_P, CPOWD, OK, 1);
+	SendCommandWithCheck(&fprintf_P, CPOWD, OK, 5);
 }
