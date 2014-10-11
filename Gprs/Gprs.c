@@ -10,7 +10,7 @@
 #define BAUD 19200
 #define MYUBRR F_CPU/16/BAUD-1
 
-#define WIND_MEASURE_S 5
+#define WIND_MEASURE_S 30
 #define SPEEDS_BLOCK_LENGTH 15
 #define WAIT_CONNECTION 10000
 
@@ -26,21 +26,17 @@ FILE uart_stream = FDEV_SETUP_STREAM(Uart_putc, Uart_getc, _FDEV_SETUP_RW);
 
 const float K1 = 57.46;
 const float K2 = 0.00046;
-long unsigned int StrobeSum;
-long int Ticks = 0;
 
 unsigned int speeds[SPEEDS_BLOCK_LENGTH];
-unsigned int firstSpeed[1];
-char s1[64];
 
 int main(void)
 {
-	int isSend = 0;
+	long int Ticks;
+	long unsigned int StrobeSum;
+		
 	stdout = stdin = &uart_stream;	
-	Uart_init(MYUBRR);	
+	Uart_init(MYUBRR);		
 	
-	unsigned int strobeAverage;
-
     while(1)
     {
 	    AC_On();
@@ -55,11 +51,12 @@ int main(void)
 			    Ticks++;
 		    }
 		    
-		    strobeAverage = StrobeSum / WIND_MEASURE_S;
-		    speeds[i] = (unsigned int)(K1 / exp(K2 * strobeAverage));
+		    speeds[i] = (unsigned int)(K1 / exp(K2 * (StrobeSum / WIND_MEASURE_S)));	
+			fprintf(stdout, "%u ", speeds[i]);
 	    }
 	    AC_Off();
-	    
+	    fprintf(stdout, "\n");
+		
 	    Sim900PowerOn();
 	    _delay_ms(WAIT_CONNECTION);
 	    Sim900SendSpeed(speeds, SPEEDS_BLOCK_LENGTH);

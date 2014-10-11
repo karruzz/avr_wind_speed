@@ -6,7 +6,7 @@
  * License: GNU GPL 3
  */
 
-#define RESPONSE_WAIT 3000
+#define RESPONSE_WAIT 4000
 #define RESPONSE_PAUSE 1000
 
 #include "Sim_900.h"
