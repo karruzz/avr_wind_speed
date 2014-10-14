@@ -10,12 +10,11 @@
 #define BAUD 19200
 #define MYUBRR F_CPU/16/BAUD-1
 
-#define WIND_MEASURE_S 30
+#define WIND_MEASURE_S 120
 #define SPEEDS_BLOCK_LENGTH 15
 #define WAIT_CONNECTION 10000
 
 #include <stdio.h>
-#include <math.h>
 #include <util/delay.h>
 
 #include "Uart.h"
@@ -23,9 +22,6 @@
 #include "Adc.h"
 
 FILE uart_stream = FDEV_SETUP_STREAM(Uart_putc, Uart_getc, _FDEV_SETUP_RW);
-
-const float K1 = 57.46;
-const float K2 = 0.00046;
 
 unsigned int speeds[SPEEDS_BLOCK_LENGTH];
 
@@ -36,6 +32,10 @@ int main(void)
 		
 	stdout = stdin = &uart_stream;	
 	Uart_init(MYUBRR);		
+	
+	Sim900PowerOn();
+	_delay_ms(5000);
+	Sim900PowerOff();
 	
     while(1)
     {
@@ -51,7 +51,7 @@ int main(void)
 			    Ticks++;
 		    }
 		    
-		    speeds[i] = (unsigned int)(K1 / exp(K2 * (StrobeSum / WIND_MEASURE_S)));	
+		    speeds[i] = (unsigned int)(StrobeSum / WIND_MEASURE_S);	
 			fprintf(stdout, "%u ", speeds[i]);
 	    }
 	    AC_Off();
