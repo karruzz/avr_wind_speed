@@ -52,6 +52,7 @@ int main(void)
 		    }
 		    
 		    speeds[i] = (unsigned int)(StrobeSum / WIND_MEASURE_S);	
+			speeds[i] = (unsigned int)(65535 - i*3000);
 			fprintf(stdout, "%u ", speeds[i]);
 	    }
 	    AC_Off();

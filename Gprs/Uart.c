@@ -8,8 +8,8 @@
 
 #include "Uart.h"
 
-FIFO(256) uart_tx_fifo;
-FIFO(256) uart_rx_fifo;
+FIFO(64) uart_tx_fifo;
+FIFO(64) uart_rx_fifo;
 
 void Uart_init(unsigned int ubrr) 
 {	
