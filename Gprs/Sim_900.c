@@ -8,6 +8,7 @@
 
 #define RESPONSE_WAIT 4000
 #define RESPONSE_PAUSE 1000
+#define ATTEMPTS 5
 
 #include "Sim_900.h"
 
@@ -36,17 +37,18 @@ char url[64];
 
 int CheckResponse(const char *response)
 {
-	clearerr(stdin);
+	if (feof(stdin)) return 0;
 	memset(s, 0, sizeof(s));
-	if (fgets(s, sizeof(s) - 1, stdin)==NULL) return 0;	
-	if (!memmem_P(s, strlen(s), response, strlen_P(response))) return 0;
+	fgets(s, sizeof(s) - 1, stdin);	
+	if (!memmem_P(s, strlen(s), response, strlen_P(response))) return 0;	
 	return 1;	
 }
 
-void SendCommandWithCheck(const char *command, const char *response, unsigned int attempts)
+void SendCommandWithCheck(const char *command, const char *response)
 {
 	int attempt = 0;
-	while(attempt < attempts) {
+	while(attempt < ATTEMPTS) {
+		clearerr(stdin);
 		fprintf_P(stdout, command);
 		fprintf(stdout, "\n");
 		_delay_ms(RESPONSE_WAIT);
@@ -55,24 +57,32 @@ void SendCommandWithCheck(const char *command, const char *response, unsigned in
 	}
 }
 
+void SendCommand(const char *command)
+{
+	fprintf_P(stdout, command);
+	fprintf(stdout, "\n");
+	_delay_ms(RESPONSE_WAIT);
+}
+
 void Sim900SendSpeed(unsigned int speeds[], int count)
 {	
-	SendCommandWithCheck(CREG, CREG_RESPONSE, 5);
+	SendCommandWithCheck(CREG, CREG_RESPONSE);
 
-	SendCommandWithCheck(SAPBR_CONTYPE, OK, 1);
-	SendCommandWithCheck(SAPBR_APN, OK, 1);
-	SendCommandWithCheck(SAPBR_USER, OK, 1);
-	SendCommandWithCheck(SAPBR_PWD, OK, 1);
+	SendCommand(SAPBR_CONTYPE);
+	SendCommand(SAPBR_APN);
+	SendCommand(SAPBR_USER);
+	SendCommand(SAPBR_PWD);
 	
-	SendCommandWithCheck(SAPBR_CONNECT, OK, 5);
+	SendCommandWithCheck(SAPBR_CONNECT, OK);
 	
 	// http request
-	SendCommandWithCheck(HTTPINIT, OK, 1);
-	SendCommandWithCheck(HTTPPARA_CID, OK, 1);
+	SendCommand(HTTPINIT);
+	SendCommand(HTTPPARA_CID);
 	
 	int attempt = 0;
-	while(attempt < 5)
+	while(attempt < ATTEMPTS)
 	{
+		clearerr(stdin);
 		fprintf_P(stdout, HTTPPARA_URL);
 		_delay_ms(500);
 		for (int i = 0; i < count - 1; i++)
@@ -86,7 +96,7 @@ void Sim900SendSpeed(unsigned int speeds[], int count)
 		attempt++;	
 	}
 	
-	SendCommandWithCheck(HTTPACTION, HTTPACTION_RESPONSE, 5);
+	SendCommandWithCheck(HTTPACTION, HTTPACTION_RESPONSE);
 }
 
 void Sim900PowerOn() 
@@ -98,5 +108,5 @@ void Sim900PowerOn()
 
 void Sim900PowerOff()
 {
-	SendCommandWithCheck(CPOWD, OK, 5);
+	SendCommandWithCheck(CPOWD, OK);
 }
