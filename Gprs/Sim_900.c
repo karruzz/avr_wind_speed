@@ -44,7 +44,7 @@ int CheckResponse(const char *response)
 	memset(s, 0, sizeof(s));
 	while (fgets(s, sizeof(s)-1, stdin))
 	{		
-		fprintf(stdout, "<%s>\n", s);
+		//fprintf(stdout, "<%s>\n", s);
 		if (memmem_P(s, strlen(s), response, strlen_P(response))) 
 		{
 			_delay_ms(300);
