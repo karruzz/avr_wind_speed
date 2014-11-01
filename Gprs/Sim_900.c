@@ -8,9 +8,10 @@
 
 #define RESPONSE_WAIT 4000
 #define RESPONSE_PAUSE 1000
-#define ATTEMPTS 5
 
 #include "Sim_900.h"
+
+const char ECHO_OFF[] PROGMEM = "ATE0";
 
 const char CREG[] PROGMEM = "AT+CREG?";
 const char CREG_RESPONSE[] PROGMEM = "+CREG: 0,1";
@@ -32,22 +33,33 @@ const char CPOWD[] PROGMEM = "AT+CPOWD=1";
 
 const char OK[] PROGMEM = "OK";
 
-char s[32];
+const char POWER_DOWN[] PROGMEM = "NORMAL POWER DOWN";
+
+
+char s[30];
 char url[64];
 
 int CheckResponse(const char *response)
 {
-	if (feof(stdin)) return 0;
 	memset(s, 0, sizeof(s));
-	fgets(s, sizeof(s) - 1, stdin);	
-	if (!memmem_P(s, strlen(s), response, strlen_P(response))) return 0;	
-	return 1;	
+	while (fgets(s, sizeof(s)-1, stdin))
+	{		
+		fprintf(stdout, "<%s>\n", s);
+		if (memmem_P(s, strlen(s), response, strlen_P(response))) 
+		{
+			_delay_ms(300);
+			return 1;
+		}
+		_delay_ms(300);		
+		memset(s, 0, sizeof(s));		
+	}
+	return 0;	
 }
 
-void SendCommandWithCheck(const char *command, const char *response)
+void SendCommandWithCheck(const char *command, const char *response, int attempts)
 {
 	int attempt = 0;
-	while(attempt < ATTEMPTS) {
+	while(attempt < attempts) {				
 		clearerr(stdin);
 		fprintf_P(stdout, command);
 		fprintf(stdout, "\n");
@@ -57,30 +69,25 @@ void SendCommandWithCheck(const char *command, const char *response)
 	}
 }
 
-void SendCommand(const char *command)
-{
-	fprintf_P(stdout, command);
-	fprintf(stdout, "\n");
-	_delay_ms(RESPONSE_WAIT);
-}
-
 void Sim900SendSpeed(unsigned int speeds[], int count)
 {	
-	SendCommandWithCheck(CREG, CREG_RESPONSE);
-
-	SendCommand(SAPBR_CONTYPE);
-	SendCommand(SAPBR_APN);
-	SendCommand(SAPBR_USER);
-	SendCommand(SAPBR_PWD);
+	SendCommandWithCheck(ECHO_OFF, OK, 5);
 	
-	SendCommandWithCheck(SAPBR_CONNECT, OK);
+	SendCommandWithCheck(CREG, CREG_RESPONSE, 5);
+
+	SendCommandWithCheck(SAPBR_CONTYPE, OK, 1);
+	SendCommandWithCheck(SAPBR_APN, OK, 1);
+	SendCommandWithCheck(SAPBR_USER, OK, 1);
+	SendCommandWithCheck(SAPBR_PWD, OK, 1);
+	
+	SendCommandWithCheck(SAPBR_CONNECT, OK, 5);
 	
 	// http request
-	SendCommand(HTTPINIT);
-	SendCommand(HTTPPARA_CID);
+	SendCommandWithCheck(HTTPINIT, OK, 1);
+	SendCommandWithCheck(HTTPPARA_CID, OK, 1);
 	
 	int attempt = 0;
-	while(attempt < ATTEMPTS)
+	while(attempt < 5)
 	{
 		clearerr(stdin);
 		fprintf_P(stdout, HTTPPARA_URL);
@@ -96,17 +103,17 @@ void Sim900SendSpeed(unsigned int speeds[], int count)
 		attempt++;	
 	}
 	
-	SendCommandWithCheck(HTTPACTION, HTTPACTION_RESPONSE);
+	SendCommandWithCheck(HTTPACTION, HTTPACTION_RESPONSE, 5);
 }
 
 void Sim900PowerOn() 
 {
-	PORTD |= _BV(PORTD5);
+	PORTD |= _BV(PORTD3);
 	_delay_ms(2000);
-	PORTD &= ~_BV(PORTD5);		
+	PORTD &= ~_BV(PORTD3);		
 }
 
 void Sim900PowerOff()
 {
-	SendCommandWithCheck(CPOWD, OK);
+	SendCommandWithCheck(CPOWD, POWER_DOWN, 5);
 }

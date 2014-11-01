@@ -10,11 +10,12 @@
 #define BAUD 19200
 #define MYUBRR F_CPU/16/BAUD-1
 
-#define WIND_MEASURE_S 120
+#define WIND_MEASURE_S 2
 #define SPEEDS_BLOCK_LENGTH 15
 #define WAIT_CONNECTION 10000
 
 #include <stdio.h>
+#include <avr/wdt.h>
 #include <util/delay.h>
 
 #include "Uart.h"
@@ -26,20 +27,23 @@ FILE uart_stream = FDEV_SETUP_STREAM(Uart_putc, Uart_getc, _FDEV_SETUP_RW);
 unsigned int speeds[SPEEDS_BLOCK_LENGTH];
 
 int main(void)
-{
+{	
 	long int Ticks;
 	long unsigned int StrobeSum;
 		
 	stdout = stdin = &uart_stream;	
 	Uart_init(MYUBRR);		
 	
+	wdt_disable();	
+	
 	Sim900PowerOn();
 	_delay_ms(5000);
 	Sim900PowerOff();
-	
+			
     while(1)
     {
 	    AC_On();
+	    wdt_enable(WDTO_8S);
 	    for (int i = 0; i < SPEEDS_BLOCK_LENGTH; i++)
 	    {
 		    Ticks = 0;
@@ -49,12 +53,13 @@ int main(void)
 			    _delay_ms(1000);
 			    StrobeSum += StrobeTime;
 			    Ticks++;
+				wdt_reset();
 		    }
 		    
 		    speeds[i] = (unsigned int)(StrobeSum / WIND_MEASURE_S);	
-			speeds[i] = (unsigned int)(1200 + i*500);
 			fprintf(stdout, "%u ", speeds[i]);
 	    }
+		wdt_disable();
 	    AC_Off();
 	    fprintf(stdout, "\n");
 		
