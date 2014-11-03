@@ -13,8 +13,8 @@ void AC_On()
 {
 	StrobeTime = 0xFFFF;
 	// вкл питание датчика	
-	DDRB |= _BV(DDRB3);
-	PORTB |= _BV(PORTB3);
+	DDRD |= _BV(DDRD5);
+	PORTD |= _BV(PORTD5);
 		
 	DDRD &= ~ (_BV(DDRD6) | _BV(DDRD7));
 	PORTD &= ~ (_BV(PORTD6) | _BV(PORTD7));	
@@ -37,8 +37,8 @@ void AC_Off()
 	ACSR |= _BV(ACD);
 	
 	// выкл питание датчика
-	DDRB |= _BV(DDRB3);
-	PORTB &= ~_BV(PORTB3);	
+	DDRD |= _BV(DDRD5);
+	PORTD &= ~_BV(PORTD5);	
 }
 
 // таймер сработал на событие с компаратора
