@@ -6,81 +6,80 @@
  * License: GNU GPL 3
  */
 
-#define F_CPU 3686400UL
-#define BAUD 19200
-#define MYUBRR F_CPU/16/BAUD-1
-
-#define WIND_MEASURE_S 120
-#define SPEEDS_BLOCK_LENGTH 15
-#define FACTORS 3
-#define WAIT_CONNECTION 10000
-
 #include <stdio.h>
 #include <avr/wdt.h>
 #include <util/delay.h>
 
-#include "Uart.h"
-#include "Sim_900.h"
-#include "Adc.h"
+#include "uart.h"
+#include "sim_900.h"
+#include "adc.h"
 
-FILE uart_stream = FDEV_SETUP_STREAM(Uart_putc, Uart_getc, _FDEV_SETUP_RW);
+// #define F_CPU 3686400UL  // in cmake
+#define BAUD 19200
+#define MYUBRR F_CPU/16/BAUD-1
+#define SPEED_MEASURMENTS 15
+#define FACTORS 3
 
-unsigned int speeds[SPEEDS_BLOCK_LENGTH];
+const int WIND_MEASURE_S = 128; // 1 << 7
+const int SIM_WAIT_CONNECTION = 8000;
+
+FILE uart_stream = FDEV_SETUP_STREAM(uart_putc, uart_getc, _FDEV_SETUP_RW);
+
+uint16_t speeds[SPEED_MEASURMENTS];
 
 float K[FACTORS] = { -0.00866, -0.00583, -0.003 };
-int x0[FACTORS] = { 1200, 2400, 10000 };
-int B[FACTORS] = { 33, 26, 4 };
-	
-unsigned int Speed(unsigned int x)
+int16_t x0[FACTORS] = { 1200, 2400, 10000 };
+int16_t B[FACTORS] = { 33, 26, 4 };
+
+inline
+unsigned int to_speed(unsigned int period)
 {
-	long int xTemp = x;
 	for (int i = 0; i < FACTORS; i++)
-	{
-		if (xTemp < x0[i]) return (unsigned int) (K[i] * (xTemp - x0[i]) + B[i]);
-	}	
-	return 0;	
-}	
+		if (period < x0[i])
+			// always positive linear model
+			return (uint16_t) K[i] * (period - x0[i]) + B[i];
+
+	return 0;
+}
 
 int main(void)
-{	
-	int Ticks;
-	unsigned int SpeedSum;
-		
-	stdout = stdin = &uart_stream;	
-	Uart_init(MYUBRR);		
-	
-	wdt_disable();	
-	
-	Sim900PowerOn();
-	_delay_ms(5000);
-	Sim900PowerOff();
-			
-    while(1)
-    {
-	    AC_On();
-	    wdt_enable(WDTO_8S);
-	    for (int i = 0; i < SPEEDS_BLOCK_LENGTH; i++)
-	    {
-		    Ticks = 0;
-		    SpeedSum = 0;
-		    while (Ticks < WIND_MEASURE_S)
-		    {
-			    _delay_ms(995);
-			    SpeedSum += Speed(StrobeTime);
-			    Ticks++;
+{
+	stdout = stdin = &uart_stream;
+	uart_init(MYUBRR);
+
+	wdt_disable();
+#ifdef DEBUG
+	fprintf(stdout, "debug\n");
+#else
+	fprintf(stdout, "no debug\n");
+#endif
+
+	// test on/off for visual control
+	sim900_on();
+	_delay_ms(SIM_WAIT_CONNECTION);
+	sim900_off();
+
+	while(1) {
+		adc_on();
+		wdt_enable(WDTO_8S);
+		for (int i = 0; i < SPEED_MEASURMENTS; ++i) {
+			int ticks = 0;
+			uint16_t speeds_sum = 0;
+			while (ticks < WIND_MEASURE_S) {
+				_delay_ms(995);
+				speeds_sum += to_speed(adc_get_strobe_period());
+				ticks++;
 				wdt_reset();
-		    }
-		    
-		    speeds[i] = (unsigned int)(SpeedSum / WIND_MEASURE_S);	
-			fprintf(stdout, "%u ", speeds[i]);
-	    }
+			}
+
+			speeds[i] = (uint16_t)(speeds_sum >> 7);
+		}
 		wdt_disable();
-	    AC_Off();
-	    fprintf(stdout, "\n");
-		
-	    Sim900PowerOn();
-	    _delay_ms(WAIT_CONNECTION);
-	    Sim900SendSpeed(speeds, SPEEDS_BLOCK_LENGTH);
-	    Sim900PowerOff();
-    }	
+		adc_off();
+
+		sim900_on();
+		_delay_ms(SIM_WAIT_CONNECTION);
+		sim900_send_speeds(speeds, SPEED_MEASURMENTS);
+		sim900_off();
+	}
 }

@@ -6,77 +6,74 @@
  * License: GNU GPL 3
  */
 
-#include "Uart.h"
+#include "uart.h"
 
 FIFO( 64 ) uart_tx_fifo;
 FIFO( 64 ) uart_rx_fifo;
 
-void Uart_init(unsigned int ubrr) 
-{	
-	//настройка скорости обмена
+void uart_init(unsigned int ubrr)
+{
+	// baudrate
 	UBRR0H = (unsigned char)(ubrr>>8);
-	UBRR0L = (unsigned char)ubrr;
-	//8 бит данных, 1 стоп бит, без контроля четности
+	UBRR0L = (unsigned char) ubrr;
+	// 8 bit data, 1 stop, no parity
 	UCSR0C = _BV(UCSZ01) | _BV(UCSZ00);
-	//разрешить прием, передачу данных и прерывание по приёму байта
+	// enable, receive, response, interruption
 	UCSR0B = _BV(TXEN0) | _BV(RXEN0) | _BV(RXCIE0);
 }
 
-//Обработчик прерывания по окончанию приёма байта
+// data received from USART
 ISR(USART_RX_vect)
 {
 	unsigned char rxbyte = UDR0;
-	if (!FIFO_IS_FULL(uart_rx_fifo)) {
+	if (!FIFO_IS_FULL(uart_rx_fifo))
 		FIFO_PUSH(uart_rx_fifo, rxbyte);
-	}
 }
 
+// data register accepts new data
 ISR(USART_UDRE_vect)
 {
 	if (FIFO_IS_EMPTY(uart_tx_fifo)) {
-		//если данных в fifo больше нет то запрещаем это прерывание
-		UCSR0B &= ~_BV(UDRIE0);
-	}
-	else {
-		//иначе передаем следующий байт
+		UCSR0B &= ~_BV(UDRIE0); // disable this interruption
+	} else {
 		char txbyte = FIFO_FRONT(uart_tx_fifo);
 		FIFO_POP(uart_tx_fifo);
 		UDR0 = txbyte;
 	}
 }
 
-int Uart_putc(char c, FILE *file)
+int uart_putc(char c, FILE *file)
 {
 	int ret;
-    if (c == '\n') Uart_putc('\r', file);
-	cli(); //запрещаем прерывания	
+	if (c == '\n')
+		uart_putc('\r', file);
+
+	cli(); //запрещаем прерывания
 	if( !FIFO_IS_FULL(uart_tx_fifo) ) {
-		//если в буфере есть место, то добавляем туда байт
 		FIFO_PUSH(uart_tx_fifo, c);
-		//и разрешаем прерывание по освобождению передатчика
 		UCSR0B |= _BV(UDRIE0);
 		ret = 0;
+	} else {
+		ret = -1;
 	}
-	else {
-		ret = -1; //буфер переполнен
-	}
-	sei(); //разрешаем прерывания
+	sei();
+
 	return ret;
 }
 
-int Uart_getc(FILE* file)
+int uart_getc(FILE* file)
 {
 	int ret;
-	cli(); //запрещаем прерывания
+
+	cli();
 	if( !FIFO_IS_EMPTY(uart_rx_fifo) ) {
-		//если в буфере есть данные, то извлекаем их
 		ret = FIFO_FRONT(uart_rx_fifo);
 		FIFO_POP(uart_rx_fifo);
+	} else {
+		ret = _FDEV_EOF; // no data
 	}
-	else {
-		ret = _FDEV_EOF; //данных нет
-	}
-	sei(); //разрешаем прерывания
+	sei();
+
 	return ret;
 }
 

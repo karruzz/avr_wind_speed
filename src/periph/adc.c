@@ -5,54 +5,60 @@
  *  Author: karruzz
  * License: GNU GPL 3
  */
-#include "Adc.h"
 
-#define HARDWARE_LOAD_MS 5000
+#include "adc.h"
 
-void AC_On()
+static const int WAIT_HARDWARE_INIT_MS = 5000;
+static volatile uint16_t strobe_period;
+
+void adc_on()
 {
-	StrobeTime = 0xFFFF;
-	// вкл питание датчика	
-	DDRD |= _BV(DDRD5);
+	strobe_period = 0xFFFF;
+	// sensor supply put on
+	DDRD |=  _BV(DDRD5);
 	PORTD |= _BV(PORTD5);
-		
-	DDRD &= ~ (_BV(DDRD6) | _BV(DDRD7));
-	PORTD &= ~ (_BV(PORTD6) | _BV(PORTD7));	
-	
-	ACSR &= ~_BV(ACD);	
-	ACSR |= _BV(ACBG)   // подключение к выходу INT0 внутреннего ИОН
-		  | _BV(ACIS1)  // срабатывание таймера - переход с 1 на 0
-		  | _BV(ACIC);	// подключение компаратора к схеме захвата таймера1
-	
-	TCCR1B |= _BV(CS11) | _BV(CS10); // /256
-	TIMSK1 |= _BV(ICIE1) | _BV(TOIE1); // прерывание по переполнению Т1	
-	
-	_delay_ms(HARDWARE_LOAD_MS);
+
+	DDRD  &= ~ (_BV(DDRD6)  | _BV(DDRD7));
+	PORTD &= ~ (_BV(PORTD6) | _BV(PORTD7));
+
+	ACSR &= ~_BV(ACD);
+	ACSR |= _BV(ACBG) // connect internal voltage referencs source to INT0
+		 | _BV(ACIS1) // interrupt by change signal from 1 to 0 overflow
+		 | _BV(ACIC); // connect comparactor to capturing timer1
+
+	TCCR1B |= _BV(CS11)  | _BV(CS10);  // 256
+	TIMSK1 |= _BV(ICIE1) | _BV(TOIE1); // interrupt by Т1 overflow
+
+	_delay_ms(WAIT_HARDWARE_INIT_MS);
 }
 
-void AC_Off()
+void adc_off()
 {
 	TIMSK1 &= ~ (_BV(TOIE1) | _BV(ICIE1));
-	ACSR &= ~_BV(ACIC);	
+	ACSR &= ~_BV(ACIC);
 	ACSR |= _BV(ACD);
-	
-	// выкл питание датчика
+
+	// sensor supply put off
 	DDRD |= _BV(DDRD5);
-	PORTD &= ~_BV(PORTD5);	
+	PORTD &= ~_BV(PORTD5);
 }
 
-// таймер сработал на событие с компаратора
+uint16_t adc_get_strobe_period()
+{
+	return strobe_period;
+}
+
 ISR(TIMER1_CAPT_vect)
 {
 	cli();
 	TCNT1 = 0;
-	StrobeTime = ICR1;	
+	strobe_period = ICR1;
 	sei();
 }
 
 ISR(TIMER1_OVF_vect)
 {
 	cli();
-	StrobeTime = 0xFFFF;
+	strobe_period = 0xFFFF;
 	sei();
 }

@@ -14,9 +14,8 @@
 #include <util/delay.h>
 #include <avr/interrupt.h>
 
-volatile unsigned int StrobeTime;
-
-void AC_On();
-void AC_Off();
+void adc_on();
+void adc_off();
+uint16_t adc_get_strobe_period();
 
 #endif /* ADC_H_ */

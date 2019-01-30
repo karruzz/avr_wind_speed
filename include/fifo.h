@@ -1,7 +1,8 @@
 ﻿/*
  * Fifo.h
  *
- * Created: 20.09.2014 18:19:42
+ * Created: 22.05.2012
+ *  Author: artem, http://mainloop.ru/c-language/simple-fifo.html
  */ 
 
 #ifndef FIFO__H

@@ -14,8 +14,8 @@
 #include <avr/interrupt.h>
 #include "fifo.h"
 
-void Uart_init(unsigned int ubrr);
-int Uart_putc(char c, FILE *file);
-int Uart_getc(FILE* file);
+void uart_init(unsigned int ubrr);
+int uart_putc(char c, FILE *file);
+int uart_getc(FILE* file);
 
 #endif /* UART_H_ */
