@@ -48,7 +48,7 @@ int uart_putc(char c, FILE *file)
 	if (c == '\n')
 		uart_putc('\r', file);
 
-	cli(); //запрещаем прерывания
+	cli();
 	if( !FIFO_IS_FULL(uart_tx_fifo) ) {
 		FIFO_PUSH(uart_tx_fifo, c);
 		UCSR0B |= _BV(UDRIE0);
@@ -70,7 +70,7 @@ int uart_getc(FILE* file)
 		ret = FIFO_FRONT(uart_rx_fifo);
 		FIFO_POP(uart_rx_fifo);
 	} else {
-		ret = _FDEV_EOF; // no data
+		ret = _FDEV_EOF;
 	}
 	sei();
 
