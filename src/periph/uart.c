@@ -11,11 +11,11 @@
 FIFO( 64 ) uart_tx_fifo;
 FIFO( 64 ) uart_rx_fifo;
 
-void uart_init(unsigned int ubrr)
+void uart_init(uint16_t ubrr)
 {
 	// baudrate
-	UBRR0H = (unsigned char)(ubrr>>8);
-	UBRR0L = (unsigned char) ubrr;
+	UBRR0H = (uint8_t)(ubrr>>8);
+	UBRR0L = (uint8_t) ubrr;
 	// 8 bit data, 1 stop, no parity
 	UCSR0C = _BV(UCSZ01) | _BV(UCSZ00);
 	// enable, receive, response, interruption
@@ -25,7 +25,7 @@ void uart_init(unsigned int ubrr)
 // data received from USART
 ISR(USART_RX_vect)
 {
-	unsigned char rxbyte = UDR0;
+	uint8_t rxbyte = UDR0;
 	if (!FIFO_IS_FULL(uart_rx_fifo))
 		FIFO_PUSH(uart_rx_fifo, rxbyte);
 }

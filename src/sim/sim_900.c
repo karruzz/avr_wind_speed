@@ -84,7 +84,7 @@ int send_command_with_check(const char *command, const char *response, int attem
 	if (send_command_with_check(cmd, resp, attempt) < 0) break
 
 static char veloc_s[128];
-void sim900_send_speeds(unsigned int speeds[], int count)
+void sim900_send_speeds(const uint16_t* speeds, int count)
 {
 	do {
 		CHECK(ECHO_OFF, OK, 3);

@@ -19,7 +19,7 @@
 #include <avr/pgmspace.h>
 
 void sim900_on(void);
-void sim900_send_speeds(uint16_t speeds[], int count);
+void sim900_send_speeds(const uint16_t* speeds, int count);
 void sim900_off(void);
 
 #endif /* SIM_900_H_ */
